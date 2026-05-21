@@ -453,6 +453,25 @@
     }
     .imp-cancel:hover { border-color: var(--border2); color: var(--txt); }
 
+    /* ── VIEW PLACEHOLDER ───────────────────────── */
+    .empty-view {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 420px; gap: 16px; text-align: center; padding: 40px;
+    }
+    .ev-icon {
+      width: 80px; height: 80px; border-radius: 50%;
+      background: var(--card); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; margin-bottom: 8px;
+    }
+    .ev-title { font-size: 22px; font-weight: 700; color: var(--txt); }
+    .ev-msg   { font-size: 14px; color: var(--txt2); max-width: 380px; line-height: 1.6; }
+    .ev-badge {
+      margin-top: 8px; padding: 6px 16px; border-radius: 20px;
+      background: var(--blue-dim); border: 1px solid rgba(79,142,255,.25);
+      font-size: 12px; font-weight: 600; color: var(--blue);
+    }
+
     /* ── TOAST ───────────────────────────────────── */
     .toast {
       position: fixed; bottom: 88px; right: 26px; z-index: 500;
@@ -573,7 +592,7 @@
   </div>
 
   <!-- ── ROW 1: LINE CHART ─── -->
-  <div class="row row-1">
+  <div class="row row-1" id="row-line">
     <div class="card line-card">
       <div class="line-card-hd">
         <div>
@@ -593,7 +612,7 @@
   </div>
 
   <!-- ── ROW 2: RADIAL + METRICS + RADAR ─── -->
-  <div class="row row-3">
+  <div class="row row-3" id="row-metrics">
 
     <!-- Radial / Donut -->
     <div class="card">
@@ -701,7 +720,7 @@
   </div>
 
   <!-- ── ROW 3: TABLE + BAR ─── -->
-  <div class="row row-2">
+  <div class="row row-2" id="row-table">
 
     <!-- Top Posts table -->
     <div class="card">
@@ -735,6 +754,16 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- ── VIEW PLACEHOLDER (Stories / Campanhas) ─── -->
+  <div id="view-placeholder" style="display:none">
+    <div class="empty-view">
+      <div class="ev-icon"><i id="ev-icon-fa"></i></div>
+      <div class="ev-title" id="ev-title"></div>
+      <div class="ev-msg" id="ev-msg"></div>
+      <div class="ev-badge" id="ev-badge"></div>
+    </div>
   </div>
 
 </main>
@@ -986,10 +1015,50 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
   });
 });
 
+const VIEW_CONFIG = {
+  overview:  { rows: ['row-line', 'row-metrics', 'row-table'], placeholder: null },
+  posts:     { rows: ['row-metrics', 'row-table'],             placeholder: null },
+  audiencia: { rows: ['row-line', 'row-metrics'],              placeholder: null },
+  stories:   { rows: [], placeholder: { icon: 'fa-circle-play', color: 'var(--purple)', title: 'Stories', msg: 'Conecte a conta profissional do Instagram para visualizar alcance, saídas e impressões dos Stories em tempo real.' , badge: 'Em breve' } },
+  campanhas: { rows: [], placeholder: { icon: 'fa-bolt',       color: 'var(--yellow)', title: 'Campanhas', msg: 'Gerencie e compare o desempenho de campanhas pagas e orgânicas em um só lugar.', badge: 'Em desenvolvimento' } },
+};
+
+function switchView(viewKey) {
+  const cfg = VIEW_CONFIG[viewKey] || VIEW_CONFIG.overview;
+  const allRows = ['row-line', 'row-metrics', 'row-table'];
+
+  allRows.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = cfg.rows.includes(id) ? '' : 'none';
+  });
+
+  const ph = document.getElementById('view-placeholder');
+  if (cfg.placeholder) {
+    document.getElementById('ev-icon-fa').className = 'fas ' + cfg.placeholder.icon;
+    document.getElementById('ev-icon-fa').style.color = cfg.placeholder.color;
+    document.querySelector('.ev-icon').style.borderColor = cfg.placeholder.color.replace('var(', '').replace(')', '');
+    document.getElementById('ev-title').textContent = cfg.placeholder.title;
+    document.getElementById('ev-msg').textContent   = cfg.placeholder.msg;
+    document.getElementById('ev-badge').textContent = cfg.placeholder.badge;
+    ph.style.display = '';
+  } else {
+    ph.style.display = 'none';
+  }
+
+  if (viewKey === 'audiencia') {
+    document.querySelector('.line-title').textContent = 'Alcance & Engajamento ao Longo do Tempo';
+  } else {
+    document.querySelector('.line-title').textContent = 'Alcance & Engajamento por Post';
+  }
+}
+
 document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
+    const labelMap = { 'Overview': 'overview', 'Posts': 'posts', 'Audiência': 'audiencia', 'Stories': 'stories', 'Campanhas': 'campanhas' };
+    const label = this.textContent.trim();
+    switchView(labelMap[label] || 'overview');
   });
 });
 
