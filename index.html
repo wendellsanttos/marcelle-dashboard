@@ -650,7 +650,8 @@
       </div>
     </div>
     <div class="filter-row">
-      <button class="filter-btn active">7d</button>
+      <button class="filter-btn active">Todos</button>
+      <button class="filter-btn">7d</button>
       <button class="filter-btn">30d</button>
       <button class="filter-btn">90d</button>
       <button class="filter-btn">12m</button>
@@ -1165,9 +1166,17 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
       if (!b.innerHTML.includes('Filtros')) b.classList.remove('active');
     });
     this.classList.add('active');
-    const map = { '7d': 7, '30d': 30, '90d': 90, '12m': 365 };
-    activePeriodDays = map[this.textContent.trim()] !== undefined ? map[this.textContent.trim()] : null;
-    renderDashboard(getFilteredPosts(activePeriodDays));
+    const map = { 'Todos': null, '7d': 7, '30d': 30, '90d': 90, '12m': 365 };
+    const label = this.textContent.trim();
+    activePeriodDays = map[label] !== undefined ? map[label] : null;
+    const filtered = getFilteredPosts(activePeriodDays);
+    if (filtered.length === 0 && activePeriodDays !== null) {
+      // Find how many days back the most recent post is
+      const latest = allPosts.reduce((best, p) => !best || p.dateISO > best.dateISO ? p : best, null);
+      const daysAgo = latest ? Math.ceil((new Date() - new Date(latest.dateISO)) / 86400000) : '?';
+      showToast('📅', `Sem posts nos últimos ${activePeriodDays}d — o mais recente foi há ${daysAgo} dias`);
+    }
+    renderDashboard(filtered);
   });
 });
 
@@ -1882,10 +1891,14 @@ function renderDashboard(posts) {
     setMetric('reach', '0', false, periodLabel);
     setMetric('comments', '0', false, periodLabel);
     setMetric('shares', '0', false, periodLabel);
+    const latest = allPosts.length ? allPosts.reduce((b,p) => p.dateISO > b.dateISO ? p : b) : null;
+    const latestHint = latest ? ` — último post: ${latest.date}` : '';
     document.getElementById('postsBody').innerHTML = `
       <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--txt3)">
-        <i class="fas fa-calendar-times" style="font-size:20px;display:block;margin-bottom:8px"></i>
-        Nenhum post encontrado em: ${periodLabel}
+        <i class="fas fa-calendar-times" style="font-size:20px;display:block;margin-bottom:8px;opacity:.5"></i>
+        <div style="font-weight:600;margin-bottom:4px">Nenhum post em: ${periodLabel}${latestHint}</div>
+        <div style="font-size:12px;margin-bottom:14px">Tente um período maior ou clique em <b>Todos</b></div>
+        <button onclick="document.querySelector('.filter-btn').click()" style="padding:6px 16px;border-radius:20px;background:var(--blue-dim);border:1px solid rgba(79,142,255,.3);color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit">Ver todos os posts</button>
       </td></tr>`;
     document.querySelector('.ph-sub').innerHTML = `
       @marcelle · ${periodLabel}
