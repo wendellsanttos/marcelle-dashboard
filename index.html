@@ -453,6 +453,72 @@
     }
     .imp-cancel:hover { border-color: var(--border2); color: var(--txt); }
 
+    /* ── COMPARE VIEW ───────────────────────────── */
+    .cmp-selectors {
+      display: flex; align-items: center; gap: 20px;
+      margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .cmp-col { flex: 1; min-width: 260px; }
+    .cmp-col-label {
+      font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+      display: flex; align-items: center; gap: 7px; margin-bottom: 10px;
+    }
+    .cmp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .cmp-presets { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .cmp-pre {
+      padding: 4px 11px; border-radius: 20px;
+      background: var(--card2); border: 1px solid var(--border);
+      color: var(--txt2); font-size: 12px; cursor: pointer;
+      transition: all .18s; font-family: inherit;
+    }
+    .cmp-pre:hover { border-color: var(--border2); color: var(--txt); }
+    .cmp-pre.a-active { background: var(--blue-dim);   border-color: rgba(79,142,255,.35);  color: var(--blue); }
+    .cmp-pre.b-active { background: var(--purple-dim); border-color: rgba(139,92,246,.35); color: var(--purple); }
+    .cmp-dates {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 12px; color: var(--txt2);
+    }
+    .cmp-dates input[type="date"] {
+      background: var(--card2); border: 1px solid var(--border2);
+      border-radius: var(--r-xs); color: var(--txt);
+      font-size: 12px; font-family: inherit; padding: 5px 8px;
+      outline: none; cursor: pointer; color-scheme: dark;
+    }
+    .cmp-dates input[type="date"]:focus { border-color: var(--blue); }
+    .cmp-vs-badge {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: var(--card2); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: var(--txt3); flex-shrink: 0;
+    }
+    .cmp-kpis {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-bottom: 20px;
+    }
+    @media (max-width: 900px) { .cmp-kpis { grid-template-columns: repeat(2, 1fr); } }
+    .cmp-kpi {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 18px 20px;
+    }
+    .cmp-kpi-label {
+      font-size: 10px; font-weight: 700; color: var(--txt3);
+      text-transform: uppercase; letter-spacing: .6px; margin-bottom: 14px;
+    }
+    .cmp-kpi-vals { display: flex; align-items: baseline; gap: 10px; }
+    .cmp-kpi-a  { font-size: 21px; font-weight: 800; color: var(--blue); }
+    .cmp-kpi-b  { font-size: 21px; font-weight: 800; color: var(--purple); }
+    .cmp-kpi-sep { font-size: 13px; color: var(--txt3); margin: 0 2px; }
+    .cmp-kpi-delta { margin-top: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+    .cmp-kpi-delta.up  { color: var(--green); }
+    .cmp-kpi-delta.dn  { color: var(--red); }
+    .cmp-kpi-delta.neq { color: var(--txt3); }
+    .cmp-chart-card { margin-bottom: 20px; }
+    .cmp-chart-legend { display: flex; gap: 14px; align-items: center; font-size: 12px; color: var(--txt2); }
+    .cmp-chart-legend span { display: flex; align-items: center; gap: 5px; }
+    .cmp-chart-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+    .cmp-tables { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    @media (max-width: 900px) { .cmp-tables { grid-template-columns: 1fr; } }
+
     /* ── VIEW PLACEHOLDER ───────────────────────── */
     .empty-view {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -502,6 +568,7 @@
     <button class="nav-btn"><i class="fas fa-users"></i> Audiência</button>
     <button class="nav-btn"><i class="fas fa-fire"></i> Stories</button>
     <button class="nav-btn"><i class="fas fa-bolt"></i> Campanhas</button>
+    <button class="nav-btn"><i class="fas fa-code-compare"></i> Comparar</button>
   </nav>
 
   <div class="topbar-right">
@@ -751,6 +818,95 @@
       </div>
       <div style="position:relative;height:290px">
         <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── VIEW COMPARATIVO ─── -->
+  <div id="view-compare" style="display:none">
+
+    <!-- Period selectors -->
+    <div class="card cmp-selectors">
+      <div class="cmp-col">
+        <div class="cmp-col-label" style="color:var(--blue)">
+          <span class="cmp-dot" style="background:var(--blue)"></span> Período A
+        </div>
+        <div class="cmp-presets" id="cmpA-presets">
+          <button class="cmp-pre" data-side="A" data-days="30">30 dias</button>
+          <button class="cmp-pre a-active" data-side="A" data-days="90">90 dias</button>
+          <button class="cmp-pre" data-side="A" data-days="180">6 meses</button>
+          <button class="cmp-pre" data-side="A" data-days="365">12 meses</button>
+        </div>
+        <div class="cmp-dates">
+          <input type="date" id="cmpA-from" />
+          <span>até</span>
+          <input type="date" id="cmpA-to" />
+        </div>
+      </div>
+
+      <div class="cmp-vs-badge">VS</div>
+
+      <div class="cmp-col">
+        <div class="cmp-col-label" style="color:var(--purple)">
+          <span class="cmp-dot" style="background:var(--purple)"></span> Período B
+        </div>
+        <div class="cmp-presets" id="cmpB-presets">
+          <button class="cmp-pre" data-side="B" data-days="30">30 dias ant.</button>
+          <button class="cmp-pre b-active" data-side="B" data-days="90">90 dias ant.</button>
+          <button class="cmp-pre" data-side="B" data-days="180">6 meses ant.</button>
+          <button class="cmp-pre" data-side="B" data-days="365">12 meses ant.</button>
+        </div>
+        <div class="cmp-dates">
+          <input type="date" id="cmpB-from" />
+          <span>até</span>
+          <input type="date" id="cmpB-to" />
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI comparison cards -->
+    <div class="cmp-kpis" id="cmp-kpis"></div>
+
+    <!-- Bar chart -->
+    <div class="card cmp-chart-card">
+      <div class="card-hd">
+        <span class="card-title">Comparativo Visual</span>
+        <div class="cmp-chart-legend">
+          <span><i style="background:var(--blue)"></i> Período A</span>
+          <span><i style="background:var(--purple)"></i> Período B</span>
+        </div>
+      </div>
+      <div style="position:relative;height:240px">
+        <canvas id="compareChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Posts tables -->
+    <div class="cmp-tables">
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-title">Posts — Período A</span>
+          <span class="badge badge-blue" id="cmpA-badge">0 posts</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Post</th><th>Tipo</th><th>Alcance</th><th>Engaj.</th></tr></thead>
+            <tbody id="cmpA-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd">
+          <span class="card-title">Posts — Período B</span>
+          <span class="badge badge-purple" id="cmpB-badge">0 posts</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Post</th><th>Tipo</th><th>Alcance</th><th>Engaj.</th></tr></thead>
+            <tbody id="cmpB-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1016,38 +1172,45 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 const VIEW_CONFIG = {
-  overview:  { rows: ['row-line', 'row-metrics', 'row-table'], placeholder: null },
-  posts:     { rows: ['row-metrics', 'row-table'],             placeholder: null },
-  audiencia: { rows: ['row-line', 'row-metrics'],              placeholder: null },
-  stories:   { rows: [], placeholder: { icon: 'fa-circle-play', color: 'var(--purple)', title: 'Stories', msg: 'Conecte a conta profissional do Instagram para visualizar alcance, saídas e impressões dos Stories em tempo real.' , badge: 'Em breve' } },
-  campanhas: { rows: [], placeholder: { icon: 'fa-bolt',       color: 'var(--yellow)', title: 'Campanhas', msg: 'Gerencie e compare o desempenho de campanhas pagas e orgânicas em um só lugar.', badge: 'Em desenvolvimento' } },
+  overview:  { rows: ['row-line', 'row-metrics', 'row-table'], placeholder: null, compare: false },
+  posts:     { rows: ['row-metrics', 'row-table'],             placeholder: null, compare: false },
+  audiencia: { rows: ['row-line', 'row-metrics'],              placeholder: null, compare: false },
+  stories:   { rows: [], placeholder: { icon: 'fa-circle-play', color: 'var(--purple)', title: 'Stories', msg: 'Conecte a conta profissional do Instagram para visualizar alcance, saídas e impressões dos Stories em tempo real.', badge: 'Em breve' }, compare: false },
+  campanhas: { rows: [], placeholder: { icon: 'fa-bolt', color: 'var(--yellow)', title: 'Campanhas', msg: 'Gerencie e compare o desempenho de campanhas pagas e orgânicas em um só lugar.', badge: 'Em desenvolvimento' }, compare: false },
+  comparar:  { rows: [], placeholder: null, compare: true },
 };
 
 function switchView(viewKey) {
   const cfg = VIEW_CONFIG[viewKey] || VIEW_CONFIG.overview;
   const allRows = ['row-line', 'row-metrics', 'row-table'];
+  const ph = document.getElementById('view-placeholder');
+  const cv = document.getElementById('view-compare');
 
   allRows.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = cfg.rows.includes(id) ? '' : 'none';
   });
 
-  const ph = document.getElementById('view-placeholder');
-  if (cfg.placeholder) {
+  if (cfg.compare) {
+    cv.style.display = '';
+    ph.style.display = 'none';
+    initCompare();
+  } else if (cfg.placeholder) {
+    cv.style.display = 'none';
     document.getElementById('ev-icon-fa').className = 'fas ' + cfg.placeholder.icon;
     document.getElementById('ev-icon-fa').style.color = cfg.placeholder.color;
-    document.querySelector('.ev-icon').style.borderColor = cfg.placeholder.color.replace('var(', '').replace(')', '');
     document.getElementById('ev-title').textContent = cfg.placeholder.title;
     document.getElementById('ev-msg').textContent   = cfg.placeholder.msg;
     document.getElementById('ev-badge').textContent = cfg.placeholder.badge;
     ph.style.display = '';
   } else {
+    cv.style.display = 'none';
     ph.style.display = 'none';
   }
 
   if (viewKey === 'audiencia') {
     document.querySelector('.line-title').textContent = 'Alcance & Engajamento ao Longo do Tempo';
-  } else {
+  } else if (viewKey !== 'comparar') {
     document.querySelector('.line-title').textContent = 'Alcance & Engajamento por Post';
   }
 }
@@ -1056,11 +1219,192 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', function() {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     this.classList.add('active');
-    const labelMap = { 'Overview': 'overview', 'Posts': 'posts', 'Audiência': 'audiencia', 'Stories': 'stories', 'Campanhas': 'campanhas' };
-    const label = this.textContent.trim();
-    switchView(labelMap[label] || 'overview');
+    const labelMap = { 'Overview': 'overview', 'Posts': 'posts', 'Audiência': 'audiencia', 'Stories': 'stories', 'Campanhas': 'campanhas', 'Comparar': 'comparar' };
+    switchView(labelMap[this.textContent.trim()] || 'overview');
   });
 });
+
+// ══════════════════════════════════════════════════
+// COMPARE VIEW
+// ══════════════════════════════════════════════════
+let compareChart = null;
+let cmpInited = false;
+
+function dateFmt(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+function initCompare() {
+  if (cmpInited) { runCompare(); return; }
+  cmpInited = true;
+
+  // Default: A = last 90 days, B = 90 days before that
+  const today = new Date();
+  const d = n => { const x = new Date(today); x.setDate(x.getDate() - n); return x; };
+
+  document.getElementById('cmpA-to').value   = dateFmt(today);
+  document.getElementById('cmpA-from').value = dateFmt(d(90));
+  document.getElementById('cmpB-to').value   = dateFmt(d(91));
+  document.getElementById('cmpB-from').value = dateFmt(d(180));
+
+  // Preset buttons
+  document.querySelectorAll('.cmp-pre').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const side = this.dataset.side;
+      const days = +this.dataset.days;
+      document.querySelectorAll(`.cmp-pre[data-side="${side}"]`).forEach(b => b.classList.remove('a-active', 'b-active'));
+      this.classList.add(side === 'A' ? 'a-active' : 'b-active');
+
+      if (side === 'A') {
+        document.getElementById('cmpA-to').value   = dateFmt(today);
+        document.getElementById('cmpA-from').value = dateFmt(d(days));
+        // Auto-shift B to the previous equivalent period
+        document.getElementById('cmpB-to').value   = dateFmt(d(days + 1));
+        document.getElementById('cmpB-from').value = dateFmt(d(days * 2));
+      } else {
+        const aFrom = new Date(document.getElementById('cmpA-from').value);
+        const aDays = Math.round((today - aFrom) / 86400000);
+        document.getElementById('cmpB-to').value   = dateFmt(d(aDays + 1));
+        document.getElementById('cmpB-from').value = dateFmt(d(aDays + days));
+      }
+      runCompare();
+    });
+  });
+
+  // Date pickers
+  ['cmpA-from','cmpA-to','cmpB-from','cmpB-to'].forEach(id => {
+    document.getElementById(id).addEventListener('change', runCompare);
+  });
+
+  // Init chart
+  compareChart = new Chart(document.getElementById('compareChart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [
+      { label: 'Período A', data: [], backgroundColor: 'rgba(79,142,255,.75)', borderRadius: 5, borderSkipped: false },
+      { label: 'Período B', data: [], backgroundColor: 'rgba(139,92,246,.65)', borderRadius: 5, borderSkipped: false },
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#161b30', borderColor: 'rgba(255,255,255,.1)', borderWidth: 1, padding: 10,
+          callbacks: {
+            label: ctx => `  ${ctx.dataset.label}: ${ctx.raw.toLocaleString('pt-BR')}`,
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 10 }, callback: v => v >= 1000 ? (v/1000).toFixed(1)+'k' : v } }
+      }
+    }
+  });
+
+  runCompare();
+}
+
+function cmpStats(posts) {
+  const withEng = posts.filter(p => p.engagement > 0);
+  return {
+    count:      posts.length,
+    reach:      posts.reduce((s,p) => s + p.reach, 0),
+    inter:      posts.reduce((s,p) => s + p.totalInteractions, 0),
+    vidViews:   posts.reduce((s,p) => s + p.videoViews, 0),
+    comments:   posts.reduce((s,p) => s + p.comments, 0),
+    shares:     posts.reduce((s,p) => s + p.shares + p.saves, 0),
+    avgEng:     withEng.length ? +(withEng.reduce((s,p) => s+p.engagement,0)/withEng.length).toFixed(2) : 0,
+  };
+}
+
+function renderCmpTable(tbodyId, posts) {
+  const tbody = document.getElementById(tbodyId);
+  if (!posts.length) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--txt3)">Nenhum post neste período</td></tr>`;
+    return;
+  }
+  const typeStyle = t => {
+    if (t === 'Reel' || t === 'Reels') return { color:'var(--purple)', bg:'var(--purple-dim)', label:'Reel' };
+    if (t === 'Carrossel')             return { color:'var(--pink)',   bg:'var(--pink-dim)',   label:'Carrossel' };
+    return { color:'var(--blue)', bg:'var(--blue-dim)', label: t };
+  };
+  tbody.innerHTML = [...posts].sort((a,b) => b.totalInteractions - a.totalInteractions).map(p => {
+    const ts = typeStyle(p.type);
+    const linkAttr = p.link ? `onclick="window.open('${p.link}','_blank')" style="cursor:pointer"` : '';
+    return `<tr ${linkAttr}>
+      <td><div style="font-size:12px;font-weight:500;color:var(--txt)">${p.name.substring(0,32)}${p.name.length>32?'…':''}</div><div style="font-size:11px;color:var(--txt3)">${p.date}</div></td>
+      <td><span class="type-tag" style="background:${ts.bg};color:${ts.color}">${ts.label}</span></td>
+      <td style="font-weight:600;font-size:13px">${p.reach.toLocaleString('pt-BR')}</td>
+      <td style="font-size:13px">${p.engagement > 0 ? p.engagement.toFixed(1)+'%' : '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function runCompare() {
+  const aFrom = new Date(document.getElementById('cmpA-from').value + 'T00:00:00');
+  const aTo   = new Date(document.getElementById('cmpA-to').value   + 'T23:59:59');
+  const bFrom = new Date(document.getElementById('cmpB-from').value + 'T00:00:00');
+  const bTo   = new Date(document.getElementById('cmpB-to').value   + 'T23:59:59');
+
+  const postsA = allPosts.filter(p => { const d = new Date(p.dateISO); return d >= aFrom && d <= aTo; });
+  const postsB = allPosts.filter(p => { const d = new Date(p.dateISO); return d >= bFrom && d <= bTo; });
+
+  const sA = cmpStats(postsA);
+  const sB = cmpStats(postsB);
+
+  document.getElementById('cmpA-badge').textContent = `${sA.count} post${sA.count !== 1 ? 's' : ''}`;
+  document.getElementById('cmpB-badge').textContent = `${sB.count} post${sB.count !== 1 ? 's' : ''}`;
+
+  // KPI cards
+  const kpiDefs = [
+    { label: 'Posts publicados', keyA: sA.count,    keyB: sB.count,    fmt: v => v,                         unit: '' },
+    { label: 'Alcance total',    keyA: sA.reach,    keyB: sB.reach,    fmt: v => fmtNum(v),                 unit: '' },
+    { label: 'Interações',       keyA: sA.inter,    keyB: sB.inter,    fmt: v => fmtNum(v),                 unit: '' },
+    { label: 'Engajamento médio',keyA: sA.avgEng,   keyB: sB.avgEng,   fmt: v => v.toFixed(1),              unit: '%' },
+    { label: 'Visualizações',    keyA: sA.vidViews, keyB: sB.vidViews, fmt: v => fmtNum(v),                 unit: '' },
+    { label: 'Comp. + Salvos',   keyA: sA.shares,   keyB: sB.shares,   fmt: v => v.toLocaleString('pt-BR'), unit: '' },
+  ];
+
+  document.getElementById('cmp-kpis').innerHTML = kpiDefs.map(k => {
+    let deltaHtml = '';
+    if (k.keyB > 0) {
+      const pct = ((k.keyA - k.keyB) / k.keyB * 100).toFixed(1);
+      const cls = k.keyA > k.keyB ? 'up' : k.keyA < k.keyB ? 'dn' : 'neq';
+      const ico = k.keyA > k.keyB ? '↑' : k.keyA < k.keyB ? '↓' : '=';
+      deltaHtml = `<div class="cmp-kpi-delta ${cls}">${ico} ${pct > 0 ? '+' : ''}${pct}% vs Período B</div>`;
+    } else if (k.keyA > 0) {
+      deltaHtml = `<div class="cmp-kpi-delta up">↑ Novo em A</div>`;
+    } else {
+      deltaHtml = `<div class="cmp-kpi-delta neq">— sem dados</div>`;
+    }
+    return `<div class="cmp-kpi">
+      <div class="cmp-kpi-label">${k.label}</div>
+      <div class="cmp-kpi-vals">
+        <span class="cmp-kpi-a">${k.fmt(k.keyA)}${k.unit}</span>
+        <span class="cmp-kpi-sep">vs</span>
+        <span class="cmp-kpi-b">${k.fmt(k.keyB)}${k.unit}</span>
+      </div>
+      ${deltaHtml}
+    </div>`;
+  }).join('');
+
+  // Chart — show Alcance, Interações, Vid Views, Comentários
+  const chartMetrics = [
+    { label: 'Alcance', a: sA.reach,    b: sB.reach },
+    { label: 'Interações', a: sA.inter,  b: sB.inter },
+    { label: 'Vid. Views', a: sA.vidViews, b: sB.vidViews },
+    { label: 'Comentários', a: sA.comments, b: sB.comments },
+    { label: 'Comp+Salvos', a: sA.shares, b: sB.shares },
+  ];
+  compareChart.data.labels = chartMetrics.map(m => m.label);
+  compareChart.data.datasets[0].data = chartMetrics.map(m => m.a);
+  compareChart.data.datasets[1].data = chartMetrics.map(m => m.b);
+  compareChart.update('active');
+
+  // Tables
+  renderCmpTable('cmpA-tbody', postsA);
+  renderCmpTable('cmpB-tbody', postsB);
+}
 
 // ══════════════════════════════════════════════════
 // IMPORT SYSTEM
