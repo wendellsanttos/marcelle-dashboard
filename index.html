@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InsightGram — Analytics Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── RESET & TOKENS ─────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg:        #080b18;
+      --bg2:       #0d1020;
+      --card:      #111425;
+      --card2:     #161b30;
+      --border:    rgba(255,255,255,0.07);
+      --border2:   rgba(255,255,255,0.12);
+
+      --txt:       #e4e8f4;
+      --txt2:      #7d89aa;
+      --txt3:      #3e4866;
+
+      --blue:      #4f8eff;
+      --blue-dim:  rgba(79,142,255,0.15);
+      --blue-glow: rgba(79,142,255,0.35);
+      --purple:    #8b5cf6;
+      --purple-dim:rgba(139,92,246,0.15);
+      --green:     #10b981;
+      --green-dim: rgba(16,185,129,0.15);
+      --yellow:    #f59e0b;
+      --yellow-dim:rgba(245,158,11,0.15);
+      --pink:      #ec4899;
+      --pink-dim:  rgba(236,72,153,0.15);
+      --red:       #ef4444;
+      --red-dim:   rgba(239,68,68,0.15);
+
+      --r:   14px;
+      --r-s:  8px;
+      --r-xs: 6px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--txt);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+    /* ── TOPBAR ─────────────────────────────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; height: 60px;
+      background: rgba(13,16,32,0.85);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(16px);
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 15px; letter-spacing: -0.2px;
+      text-decoration: none; color: var(--txt);
+    }
+    .logo-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--purple), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; box-shadow: 0 0 14px var(--purple-dim);
+    }
+
+    .topnav { display: flex; gap: 2px; }
+    .nav-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 7px 13px; border-radius: var(--r-s);
+      font-size: 12.5px; font-weight: 500; color: var(--txt2);
+      cursor: pointer; transition: all .18s; user-select: none;
+      border: none; background: none;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.05); color: var(--txt); }
+    .nav-btn.active { background: var(--blue-dim); color: var(--blue); }
+
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 20px;
+      background: var(--green-dim);
+      border: 1px solid rgba(16,185,129,0.25);
+      font-size: 11px; font-weight: 600; color: var(--green);
+    }
+    .pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .date-pick {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: var(--r-s);
+      background: var(--card); border: 1px solid var(--border);
+      font-size: 12px; color: var(--txt2); cursor: pointer;
+    }
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--blue));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; cursor: pointer;
+      border: 2px solid var(--border2);
+    }
+
+    /* ── MAIN ───────────────────────────────────── */
+    .main {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 26px 28px 80px;
+    }
+
+    /* ── PAGE HEADER ─────────────────────────────── */
+    .ph {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .ph-title { font-size: 21px; font-weight: 800; letter-spacing: -0.4px; }
+    .ph-sub {
+      font-size: 12.5px; color: var(--txt2); margin-top: 4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ph-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      background: var(--green-dim); color: var(--green);
+    }
+    .filter-row { display: flex; gap: 6px; }
+    .filter-btn {
+      padding: 7px 13px; border-radius: var(--r-s);
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--txt2); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all .18s; font-family: 'Inter', sans-serif;
+    }
+    .filter-btn:hover { border-color: var(--border2); color: var(--txt); }
+    .filter-btn.active {
+      background: var(--blue-dim);
+      border-color: rgba(79,142,255,0.35);
+      color: var(--blue);
+    }
+
+    /* ── CARD BASE ───────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      transition: border-color .2s;
+    }
+    .card:hover { border-color: var(--border2); }
+
+    .card-hd {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 11px; font-weight: 600; color: var(--txt3);
+      text-transform: uppercase; letter-spacing: .6px;
+    }
+    .badge {
+      font-size: 10.5px; font-weight: 600;
+      padding: 3px 8px; border-radius: 20px;
+    }
+    .badge-blue   { background: var(--blue-dim);   color: var(--blue);   }
+    .badge-green  { background: var(--green-dim);  color: var(--green);  }
+    .badge-purple { background: var(--purple-dim); color: var(--purple); }
+    .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
+
+    /* ── GRID ROWS ───────────────────────────────── */
+    .row { display: grid; gap: 18px; margin-bottom: 18px; }
+    .row-1 { grid-template-columns: 1fr; }
+    .row-3 { grid-template-columns: 260px 1fr 260px; }
+    .row-2 { grid-template-columns: 1fr 1fr; }
+
+    @media (max-width: 1150px) {
+      .row-3 { grid-template-columns: 1fr; }
+      .row-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ── LINE CHART CARD ─────────────────────────── */
+    .line-card { padding: 22px 24px; }
+    .line-card-hd {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .line-title { font-size: 16px; font-weight: 700; }
+    .line-sub { font-size: 12px; color: var(--txt2); margin-top: 3px; }
+    .line-sub b { color: var(--txt); font-weight: 600; }
+    .legend { display: flex; gap: 16px; flex-wrap: wrap; }
+    .leg-item {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--txt2);
+    }
+    .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── DONUT CARD ──────────────────────────────── */
+    .donut-wrap {
+      position: relative; width: 150px; height: 150px;
+      margin: 6px auto 14px;
+    }
+    .donut-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .donut-val { font-size: 24px; font-weight: 800; line-height: 1; }
+    .donut-lbl { font-size: 10px; color: var(--txt3); margin-top: 3px; }
+
+    .donut-legend { display: flex; flex-direction: column; gap: 9px; }
+    .dl-item {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .dl-left { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--txt2); }
+    .dl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dl-pct { font-size: 12.5px; font-weight: 700; color: var(--txt); }
+
+    /* ── METRICS GRID ────────────────────────────── */
+    .metrics-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 13px; height: 100%;
+    }
+    .metric {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px 15px;
+      position: relative; overflow: hidden;
+      transition: transform .18s, border-color .18s;
+    }
+    .metric::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--acc, var(--blue));
+    }
+    .metric:hover { transform: translateY(-2px); border-color: var(--border2); }
+    .metric-ico {
+      width: 32px; height: 32px; border-radius: var(--r-s);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; margin-bottom: 10px;
+    }
+    .metric-val { font-size: 25px; font-weight: 800; line-height: 1; margin-bottom: 3px; }
+    .metric-lbl {
+      font-size: 10px; font-weight: 500; color: var(--txt3);
+      text-transform: uppercase; letter-spacing: .4px;
+    }
+    .metric-delta {
+      display: flex; align-items: center; gap: 3px;
+      font-size: 11px; font-weight: 600; margin-top: 7px;
+    }
+    .up { color: var(--green); }
+    .dn { color: var(--red); }
+
+    /* ── RADAR CARD ──────────────────────────────── */
+    .radar-stats { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+    .rs-row {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11.5px;
+    }
+    .rs-label { color: var(--txt2); }
+    .rs-val { font-weight: 700; }
+
+    /* ── TABLE ───────────────────────────────────── */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      font-size: 10.5px; font-weight: 600;
+      color: var(--txt3); text-transform: uppercase;
+      letter-spacing: .5px; padding: 8px 10px; text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    td { padding: 10px 10px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .post-row { display: flex; align-items: center; gap: 10px; }
+    .post-thumb {
+      width: 34px; height: 34px; border-radius: var(--r-xs);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .post-name { font-weight: 500; font-size: 12.5px; }
+    .post-date { font-size: 10.5px; color: var(--txt3); margin-top: 2px; }
+
+    .type-tag {
+      display: inline-flex; align-items: center;
+      padding: 3px 8px; border-radius: var(--r-xs);
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .3px;
+    }
+
+    .eng-bar { display: flex; align-items: center; gap: 8px; }
+    .bar-track {
+      flex: 1; height: 4px; border-radius: 2px;
+      background: rgba(255,255,255,0.06); overflow: hidden;
+    }
+    .bar-fill { height: 100%; border-radius: 2px; transition: width .5s ease; }
+    .bar-pct { font-size: 11px; color: var(--txt2); min-width: 32px; text-align: right; }
+
+    /* ── FAB ─────────────────────────────────────── */
+    .fab {
+      position: fixed; bottom: 26px; right: 26px;
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; z-index: 300;
+      box-shadow: 0 4px 20px var(--blue-glow);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px var(--blue-glow); }
+    .fab i { color: #fff; font-size: 16px; }
+
+    /* ── IMPORT BUTTON ───────────────────────────── */
+    .topbar-import {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: var(--r-s);
+      background: var(--card); border: 1px solid var(--border);
+      color: var(--txt2); font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all .18s; font-family: 'Inter', sans-serif;
+    }
+    .topbar-import:hover { border-color: rgba(79,142,255,.4); color: var(--blue); }
+
+    /* ── IMPORT PANEL ────────────────────────────── */
+    .imp-overlay {
+      position: fixed; inset: 0; z-index: 400;
+      background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .imp-overlay.open { opacity: 1; pointer-events: all; }
+
+    .imp-panel {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 460px;
+      z-index: 401; background: var(--bg2);
+      border-left: 1px solid var(--border);
+      transform: translateX(100%);
+      transition: transform .32s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column;
+    }
+    .imp-panel.open { transform: translateX(0); }
+
+    .imp-hd {
+      padding: 22px 24px 18px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .imp-title { font-size: 16px; font-weight: 700; }
+    .imp-sub { font-size: 12px; color: var(--txt2); margin-top: 3px; }
+    .imp-close {
+      width: 30px; height: 30px; border-radius: var(--r-s);
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: 1px solid var(--border);
+      color: var(--txt2); cursor: pointer; transition: all .18s; font-size: 13px;
+    }
+    .imp-close:hover { border-color: var(--border2); color: var(--txt); }
+
+    .imp-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+
+    .drop-zone {
+      border: 2px dashed var(--border2); border-radius: var(--r);
+      padding: 32px 24px; text-align: center; cursor: pointer;
+      transition: all .2s; user-select: none;
+    }
+    .drop-zone:hover, .drop-zone.over {
+      border-color: var(--blue); background: var(--blue-dim);
+    }
+    .drop-ico {
+      width: 46px; height: 46px; border-radius: var(--r);
+      background: var(--blue-dim); color: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin: 0 auto 12px;
+    }
+    .drop-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .drop-hint { font-size: 12px; color: var(--txt2); line-height: 1.6; }
+    .drop-hint b { color: var(--txt); }
+
+    .file-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+    .file-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: var(--r-s);
+      background: var(--card); border: 1px solid var(--border);
+    }
+    .file-ico {
+      width: 32px; height: 32px; border-radius: var(--r-xs);
+      display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0;
+    }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { font-size: 11px; color: var(--txt2); margin-top: 2px; }
+    .file-rm {
+      width: 22px; height: 22px; border-radius: var(--r-xs);
+      background: none; border: none; color: var(--txt3);
+      cursor: pointer; transition: all .15s; font-size: 11px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .file-rm:hover { background: var(--red-dim); color: var(--red); }
+
+    .prev-box {
+      margin-top: 16px; padding: 14px 16px;
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+    }
+    .prev-lbl {
+      font-size: 10.5px; font-weight: 600; color: var(--txt3);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
+    }
+    .prev-row { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 7px; }
+    .prev-row:last-child { margin-bottom: 0; }
+    .prev-key { color: var(--txt2); }
+    .prev-val { font-weight: 600; }
+    .prev-tag {
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 10.5px; font-weight: 700;
+    }
+
+    .guide-box {
+      margin-top: 16px; padding: 14px 16px;
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+    }
+    .guide-title { font-size: 11.5px; font-weight: 600; color: var(--txt2); margin-bottom: 8px; }
+    .guide-box ol { font-size: 11.5px; color: var(--txt2); padding-left: 16px; line-height: 1.9; }
+    .guide-box ol b { color: var(--txt); }
+
+    .imp-ft {
+      padding: 16px 24px; border-top: 1px solid var(--border);
+      flex-shrink: 0; display: flex; gap: 8px;
+    }
+    .imp-apply {
+      flex: 1; padding: 11px; border: none; border-radius: var(--r-s);
+      background: linear-gradient(135deg, var(--blue), var(--purple));
+      color: #fff; font-size: 13px; font-weight: 700;
+      font-family: 'Inter', sans-serif; cursor: not-allowed;
+      opacity: .45; transition: opacity .2s;
+    }
+    .imp-apply.ready { opacity: 1; cursor: pointer; }
+    .imp-cancel {
+      padding: 11px 16px; background: none;
+      border: 1px solid var(--border); border-radius: var(--r-s);
+      color: var(--txt2); font-size: 13px; font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: all .18s;
+    }
+    .imp-cancel:hover { border-color: var(--border2); color: var(--txt); }
+
+    /* ── TOAST ───────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 88px; right: 26px; z-index: 500;
+      background: var(--card2); border: 1px solid var(--border2);
+      border-radius: var(--r); padding: 12px 16px;
+      display: flex; align-items: center; gap: 10px; font-size: 13px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.5);
+      transform: translateY(16px); opacity: 0;
+      transition: all .3s; pointer-events: none;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     TOPBAR
+════════════════════════════════════════ -->
+<header class="topbar">
+  <a class="logo" href="#">
+    <div class="logo-icon"><i class="fab fa-instagram"></i></div>
+    InsightGram
+  </a>
+
+  <nav class="topnav">
+    <button class="nav-btn active"><i class="fas fa-chart-line"></i> Overview</button>
+    <button class="nav-btn"><i class="fas fa-image"></i> Posts</button>
+    <button class="nav-btn"><i class="fas fa-users"></i> Audiência</button>
+    <button class="nav-btn"><i class="fas fa-fire"></i> Stories</button>
+    <button class="nav-btn"><i class="fas fa-bolt"></i> Campanhas</button>
+  </nav>
+
+  <div class="topbar-right">
+    <div class="status-pill"><div class="pulse"></div>Sincronizado</div>
+    <div class="date-pick">
+      <i class="fas fa-calendar-alt" style="color:var(--txt3)"></i>
+      Últimos 30 dias
+      <i class="fas fa-chevron-down" style="font-size:9px;color:var(--txt3)"></i>
+    </div>
+    <button class="topbar-import" onclick="openImport()">
+      <i class="fas fa-file-import"></i> Importar CSV
+    </button>
+    <div class="avatar">M</div>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════
+     IMPORT PANEL
+════════════════════════════════════════ -->
+<div class="imp-overlay" id="impOverlay"></div>
+<aside class="imp-panel" id="impPanel">
+  <div class="imp-hd">
+    <div>
+      <div class="imp-title">Importar Dados</div>
+      <div class="imp-sub">CSV exportado do Meta Business Suite</div>
+    </div>
+    <button class="imp-close" id="impClose"><i class="fas fa-times"></i></button>
+  </div>
+
+  <div class="imp-body">
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-ico"><i class="fas fa-cloud-upload-alt"></i></div>
+      <div class="drop-title">Arraste os arquivos aqui</div>
+      <div class="drop-hint">
+        ou <b>clique para selecionar</b><br>
+        Suporta: visão geral da conta · posts · stories
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".csv,.tsv,.txt" multiple style="display:none">
+
+    <div class="file-list" id="fileList"></div>
+    <div id="prevArea"></div>
+
+    <div class="guide-box">
+      <div class="guide-title"><i class="fas fa-info-circle" style="color:var(--blue);margin-right:5px"></i>Como exportar do Instagram</div>
+      <ol>
+        <li>Acesse <b>Meta Business Suite → Insights</b></li>
+        <li>Selecione o período desejado</li>
+        <li>Clique em <b>Exportar dados</b> → CSV</li>
+        <li>Importe o arquivo aqui e clique em <b>Aplicar</b></li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="imp-ft">
+    <button class="imp-cancel" id="impCancel">Cancelar</button>
+    <button class="imp-apply" id="impApply">Aplicar ao Dashboard</button>
+  </div>
+</aside>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toastIco"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN
+════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- Page header -->
+  <div class="ph">
+    <div>
+      <h1 class="ph-title">Dashboard de Performance</h1>
+      <div class="ph-sub">
+        @marcelle.oficial &nbsp;·&nbsp; Mai 2026
+        <span class="ph-tag"><i class="fas fa-arrow-up" style="font-size:9px"></i> +12.4% vs mês anterior</span>
+      </div>
+    </div>
+    <div class="filter-row">
+      <button class="filter-btn active">7d</button>
+      <button class="filter-btn">30d</button>
+      <button class="filter-btn">90d</button>
+      <button class="filter-btn">12m</button>
+      <button class="filter-btn"><i class="fas fa-sliders-h"></i> Filtros</button>
+    </div>
+  </div>
+
+  <!-- ── ROW 1: LINE CHART ─── -->
+  <div class="row row-1">
+    <div class="card line-card">
+      <div class="line-card-hd">
+        <div>
+          <div class="line-title">Crescimento de Seguidores</div>
+          <div class="line-sub">Total: <b>48.293</b> seguidores &nbsp;·&nbsp; Último dado: 21/05/2026</div>
+        </div>
+        <div class="legend">
+          <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Seguidores</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>Alcance</div>
+          <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Engajamento %</div>
+        </div>
+      </div>
+      <div style="position:relative;height:220px">
+        <canvas id="lineChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 2: RADIAL + METRICS + RADAR ─── -->
+  <div class="row row-3">
+
+    <!-- Radial / Donut -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-title">Distribuição</span>
+        <span class="badge badge-blue">Conteúdo</span>
+      </div>
+      <div class="donut-wrap">
+        <canvas id="donutChart"></canvas>
+        <div class="donut-center">
+          <div class="donut-val">247</div>
+          <div class="donut-lbl">Posts</div>
+        </div>
+      </div>
+      <div class="donut-legend">
+        <div class="dl-item">
+          <div class="dl-left"><div class="dl-dot" style="background:var(--blue)"></div>Fotos</div>
+          <span class="dl-pct">42%</span>
+        </div>
+        <div class="dl-item">
+          <div class="dl-left"><div class="dl-dot" style="background:var(--purple)"></div>Reels</div>
+          <span class="dl-pct">35%</span>
+        </div>
+        <div class="dl-item">
+          <div class="dl-left"><div class="dl-dot" style="background:var(--pink)"></div>Carrossel</div>
+          <span class="dl-pct">23%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Metrics -->
+    <div class="card" style="background:transparent;border:none;padding:0">
+      <div class="metrics-grid">
+
+        <div class="metric" style="--acc:var(--blue)">
+          <div class="metric-ico" style="background:var(--blue-dim);color:var(--blue)"><i class="fas fa-users"></i></div>
+          <div class="metric-val" id="mv-followers" style="color:var(--blue)">48.3K</div>
+          <div class="metric-lbl">Seguidores</div>
+          <div class="metric-delta up" id="md-followers"><i class="fas fa-arrow-up" style="font-size:8px"></i>+1.240 esse mês</div>
+        </div>
+
+        <div class="metric" style="--acc:var(--green)">
+          <div class="metric-ico" style="background:var(--green-dim);color:var(--green)"><i class="fas fa-heart"></i></div>
+          <div class="metric-val" id="mv-engagement" style="color:var(--green)">6.8%</div>
+          <div class="metric-lbl">Engajamento</div>
+          <div class="metric-delta up" id="md-engagement"><i class="fas fa-arrow-up" style="font-size:8px"></i>+0.4% vs anterior</div>
+        </div>
+
+        <div class="metric" style="--acc:var(--purple)">
+          <div class="metric-ico" style="background:var(--purple-dim);color:var(--purple)"><i class="fas fa-eye"></i></div>
+          <div class="metric-val" id="mv-impressions" style="color:var(--purple)">312K</div>
+          <div class="metric-lbl">Impressões</div>
+          <div class="metric-delta up" id="md-impressions"><i class="fas fa-arrow-up" style="font-size:8px"></i>+18.2%</div>
+        </div>
+
+        <div class="metric" style="--acc:var(--yellow)">
+          <div class="metric-ico" style="background:var(--yellow-dim);color:var(--yellow)"><i class="fas fa-broadcast-tower"></i></div>
+          <div class="metric-val" id="mv-reach" style="color:var(--yellow)">89.5K</div>
+          <div class="metric-lbl">Alcance</div>
+          <div class="metric-delta dn" id="md-reach"><i class="fas fa-arrow-down" style="font-size:8px"></i>−2.1%</div>
+        </div>
+
+        <div class="metric" style="--acc:var(--pink)">
+          <div class="metric-ico" style="background:var(--pink-dim);color:var(--pink)"><i class="fas fa-comment-dots"></i></div>
+          <div class="metric-val" id="mv-comments" style="color:var(--pink)">4.2K</div>
+          <div class="metric-lbl">Comentários</div>
+          <div class="metric-delta up" id="md-comments"><i class="fas fa-arrow-up" style="font-size:8px"></i>+320</div>
+        </div>
+
+        <div class="metric" style="--acc:var(--blue)">
+          <div class="metric-ico" style="background:var(--blue-dim);color:var(--blue)"><i class="fas fa-share"></i></div>
+          <div class="metric-val" id="mv-shares" style="color:var(--txt)">1.8K</div>
+          <div class="metric-lbl">Compartilhamentos</div>
+          <div class="metric-delta up" id="md-shares"><i class="fas fa-arrow-up" style="font-size:8px"></i>+145</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Radar -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-title">Performance</span>
+        <span class="badge badge-green">Score 82/100</span>
+      </div>
+      <div style="position:relative;height:195px">
+        <canvas id="radarChart"></canvas>
+      </div>
+      <div class="radar-stats">
+        <div class="rs-row">
+          <span class="rs-label">Consistência de postagens</span>
+          <span class="rs-val" style="color:var(--blue)">87%</span>
+        </div>
+        <div class="rs-row">
+          <span class="rs-label">Qualidade de conteúdo</span>
+          <span class="rs-val" style="color:var(--green)">91%</span>
+        </div>
+        <div class="rs-row">
+          <span class="rs-label">Horário ideal</span>
+          <span class="rs-val" style="color:var(--yellow)">78%</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── ROW 3: TABLE + BAR ─── -->
+  <div class="row row-2">
+
+    <!-- Top Posts table -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-title">Top Posts</span>
+        <span class="badge badge-purple">Últimos 30 dias</span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Post</th>
+              <th>Tipo</th>
+              <th>Curtidas</th>
+              <th>Engajamento</th>
+            </tr>
+          </thead>
+          <tbody id="postsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Bar chart: best hours -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-title">Melhores Horários</span>
+        <span class="badge badge-yellow">Engajamento médio</span>
+      </div>
+      <div style="position:relative;height:290px">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- FAB -->
+<div class="fab" title="Exportar Relatório">
+  <i class="fas fa-download"></i>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════ -->
+<script>
+// ── Global Chart defaults ────────────────────────
+Chart.defaults.color = '#7d89aa';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.05)';
+Chart.defaults.font.family = 'Inter';
+
+// Chart references (for dynamic updates)
+const charts = {};
+
+// ── LINE CHART ───────────────────────────────────
+const lineCtx = document.getElementById('lineChart').getContext('2d');
+
+const makeGrad = (ctx, c1, c2) => {
+  const g = ctx.createLinearGradient(0, 0, 0, 220);
+  g.addColorStop(0, c1); g.addColorStop(1, c2);
+  return g;
+};
+
+const labels = ['01/05','03/05','05/05','07/05','09/05','11/05','13/05','15/05','17/05','19/05','21/05'];
+
+charts.line = new Chart(lineCtx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'Seguidores',
+        data: [45200,45800,46100,46400,46900,47100,47400,47700,48000,48150,48293],
+        borderColor: '#4f8eff',
+        backgroundColor: makeGrad(lineCtx, 'rgba(79,142,255,.28)', 'rgba(79,142,255,0)'),
+        borderWidth: 2.5, tension: .42, fill: true,
+        pointRadius: 3, pointHoverRadius: 7,
+        pointBackgroundColor: '#4f8eff', pointBorderColor: '#080b18', pointBorderWidth: 2,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Alcance',
+        data: [72000,78000,74000,82000,85000,88000,83000,90000,87000,89000,89500],
+        borderColor: '#8b5cf6',
+        backgroundColor: makeGrad(lineCtx, 'rgba(139,92,246,.18)', 'rgba(139,92,246,0)'),
+        borderWidth: 2, tension: .42, fill: true,
+        pointRadius: 2, pointHoverRadius: 6,
+        pointBackgroundColor: '#8b5cf6', pointBorderColor: '#080b18', pointBorderWidth: 2,
+        yAxisID: 'y1',
+      },
+      {
+        label: 'Engajamento %',
+        data: [5.8,6.1,5.9,6.3,6.5,6.2,6.7,6.9,6.6,6.8,6.8],
+        borderColor: '#10b981',
+        backgroundColor: 'transparent',
+        borderWidth: 2, tension: .42,
+        pointRadius: 2, pointHoverRadius: 5,
+        pointBackgroundColor: '#10b981', pointBorderColor: '#080b18', pointBorderWidth: 2,
+        yAxisID: 'y2',
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#161b30', borderColor: 'rgba(255,255,255,.1)',
+        borderWidth: 1, padding: 12,
+        titleColor: '#e4e8f4', bodyColor: '#7d89aa',
+        titleFont: { weight: '700', size: 13 },
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+      y: {
+        position: 'left', min: 44000,
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { font: { size: 10 }, callback: v => (v/1000).toFixed(0)+'k' }
+      },
+      y1: { display: false },
+      y2: { display: false }
+    }
+  }
+});
+
+// ── DONUT CHART ──────────────────────────────────
+charts.donut = new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Fotos','Reels','Carrossel'],
+    datasets: [{
+      data: [42, 35, 23],
+      backgroundColor: ['#4f8eff','#8b5cf6','#ec4899'],
+      borderColor: '#111425', borderWidth: 3,
+      hoverOffset: 5,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '74%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#161b30', borderColor: 'rgba(255,255,255,.1)',
+        borderWidth: 1, padding: 10,
+        callbacks: { label: c => `  ${c.label}: ${c.raw}%` }
+      }
+    }
+  }
+});
+
+// ── RADAR CHART ──────────────────────────────────
+charts.radar = new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: ['Engaj.','Alcance','Conteúdo','Freq.','Hashtags','Horário'],
+    datasets: [
+      {
+        label: 'Atual',
+        data: [85,72,91,78,68,87],
+        borderColor: '#4f8eff',
+        backgroundColor: 'rgba(79,142,255,.15)',
+        borderWidth: 2,
+        pointBackgroundColor: '#4f8eff', pointRadius: 3,
+      },
+      {
+        label: 'Meta',
+        data: [90,85,90,90,85,90],
+        borderColor: 'rgba(139,92,246,.45)',
+        backgroundColor: 'rgba(139,92,246,.05)',
+        borderWidth: 1.5, borderDash: [4,4],
+        pointBackgroundColor: '#8b5cf6', pointRadius: 2,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#161b30', borderColor: 'rgba(255,255,255,.1)',
+        borderWidth: 1, padding: 10,
+      }
+    },
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { display: false, stepSize: 25 },
+        grid: { color: 'rgba(255,255,255,0.07)' },
+        angleLines: { color: 'rgba(255,255,255,0.07)' },
+        pointLabels: { font: { size: 10, weight: '500' }, color: '#7d89aa' }
+      }
+    }
+  }
+});
+
+// ── BAR CHART ────────────────────────────────────
+charts.bar = new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: ['6h','8h','10h','12h','14h','16h','18h','20h','22h'],
+    datasets: [{
+      label: 'Engajamento %',
+      data: [2.1, 3.4, 4.8, 5.2, 3.8, 4.4, 7.9, 8.3, 6.1],
+      backgroundColor: ctx => {
+        const v = ctx.raw;
+        if (v >= 7.5) return '#4f8eff';
+        if (v >= 5.0) return 'rgba(79,142,255,.55)';
+        return 'rgba(79,142,255,.25)';
+      },
+      borderRadius: 7, borderSkipped: false, maxBarThickness: 38,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#161b30', borderColor: 'rgba(255,255,255,.1)',
+        borderWidth: 1, padding: 10,
+        callbacks: { label: c => `  Engaj.: ${c.raw}%` }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { font: { size: 10 }, callback: v => v + '%' }
+      }
+    }
+  }
+});
+
+// ── POSTS TABLE ──────────────────────────────────
+const posts = [
+  { emoji:'🌟', grad:'var(--purple),var(--pink)', name:'Rotina matinal completa', date:'18 mai 2026', type:'Reels', typeColor:'var(--purple)', typeBg:'var(--purple-dim)', likes:4821, eng:8.2 },
+  { emoji:'✨', grad:'var(--blue),#1a3cff',         name:'Look do dia — editorial', date:'15 mai 2026', type:'Foto',    typeColor:'var(--blue)',   typeBg:'var(--blue-dim)',   likes:3910, eng:7.2 },
+  { emoji:'🔥', grad:'var(--pink),var(--yellow)',   name:'10 dicas que mudaram tudo', date:'11 mai 2026', type:'Carrossel',typeColor:'var(--pink)',   typeBg:'var(--pink-dim)',   likes:2870, eng:6.5 },
+  { emoji:'🌿', grad:'var(--green),#0d6e4a',        name:'Receita anti-inflamatória', date:'07 mai 2026', type:'Reels', typeColor:'var(--green)',  typeBg:'var(--green-dim)',  likes:2340, eng:5.8 },
+  { emoji:'💛', grad:'var(--yellow),#b45309',       name:'Bastidores da sessão',  date:'03 mai 2026', type:'Foto',    typeColor:'var(--yellow)', typeBg:'var(--yellow-dim)', likes:1920, eng:5.0 },
+];
+
+const tbody = document.getElementById('postsBody');
+posts.forEach(p => {
+  const barW = Math.round((p.eng / 10) * 100);
+  tbody.insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>
+        <div class="post-row">
+          <div class="post-thumb" style="background:linear-gradient(135deg,${p.grad})">${p.emoji}</div>
+          <div>
+            <div class="post-name">${p.name}</div>
+            <div class="post-date">${p.date}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="type-tag" style="background:${p.typeBg};color:${p.typeColor}">${p.type}</span></td>
+      <td style="font-weight:600">${p.likes.toLocaleString('pt-BR')}</td>
+      <td>
+        <div class="eng-bar">
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${barW}%;background:${p.typeColor}"></div>
+          </div>
+          <span class="bar-pct">${p.eng}%</span>
+        </div>
+      </td>
+    </tr>`);
+});
+
+// ── UI INTERACTIONS ──────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    if (this.innerHTML.includes('Filtros')) return;
+    document.querySelectorAll('.filter-btn').forEach(b => {
+      if (!b.innerHTML.includes('Filtros')) b.classList.remove('active');
+    });
+    this.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+
+// ══════════════════════════════════════════════════
+// IMPORT SYSTEM
+// ══════════════════════════════════════════════════
+
+const importState = { files: [], parsed: {} };
+
+// ── Panel open/close ─────────────────────────────
+function openImport() {
+  document.getElementById('impPanel').classList.add('open');
+  document.getElementById('impOverlay').classList.add('open');
+}
+function closeImport() {
+  document.getElementById('impPanel').classList.remove('open');
+  document.getElementById('impOverlay').classList.remove('open');
+}
+document.getElementById('impOverlay').addEventListener('click', closeImport);
+document.getElementById('impClose').addEventListener('click', closeImport);
+document.getElementById('impCancel').addEventListener('click', closeImport);
+
+// ── Drop zone ────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('over');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+// ── CSV Parser ───────────────────────────────────
+function parseCSV(text) {
+  text = text.replace(/^﻿/, ''); // remove BOM
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return null;
+
+  // Detect separator: count ; vs ,
+  const sample = lines[0];
+  const sep = (sample.match(/;/g) || []).length >= (sample.match(/,/g) || []).length ? ';' : ',';
+
+  const parseRow = line => {
+    const out = []; let cur = '', inQ = false;
+    for (const ch of line + sep) {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === sep && !inQ) { out.push(cur.trim()); cur = ''; }
+      else cur += ch;
+    }
+    return out;
+  };
+
+  const headers = parseRow(lines[0]).map(h => h.replace(/"/g, '').toLowerCase().trim());
+  const rows = lines.slice(1).map(l => {
+    const vals = parseRow(l);
+    return Object.fromEntries(headers.map((h, i) => [h, (vals[i] || '').replace(/"/g, '')]));
+  }).filter(r => Object.values(r).some(v => v));
+
+  return { headers, rows };
+}
+
+// ── Column detection ─────────────────────────────
+const COL_MAP = {
+  date:        ['data', 'período', 'periodo', 'date', 'dia', 'day'],
+  followers:   ['total de seguidores', 'seguidores totais', 'seguidores', 'followers'],
+  newFollowers:['novos seguidores', 'seguidores ganhos', 'new followers', 'gained'],
+  reach:       ['contas alcançadas', 'accounts reached', 'alcance', 'reach'],
+  impressions: ['impressões', 'impressoes', 'impressions'],
+  engagement:  ['taxa de engajamento', 'engajamento', 'engagement rate', 'engagement'],
+  likes:       ['curtidas do post', 'curtidas', 'likes'],
+  comments:    ['comentários', 'comentarios', 'comments'],
+  shares:      ['compartilhamentos', 'shares'],
+  saves:       ['salvamentos', 'saves'],
+  type:        ['tipo de mídia', 'tipo de conteúdo', 'tipo', 'media type', 'type'],
+  caption:     ['legenda', 'caption', 'publicação', 'descrição'],
+};
+
+function findCol(headers, field) {
+  for (const candidate of (COL_MAP[field] || [])) {
+    const h = headers.find(h => h.includes(candidate));
+    if (h !== undefined) return h;
+  }
+  return null;
+}
+
+// ── File type detection ──────────────────────────
+function detectFileType(headers) {
+  const isPost = ['curtidas', 'likes', 'legenda', 'caption', 'tipo de mídia'].some(k => headers.some(h => h.includes(k)));
+  const isAccount = ['novos seguidores', 'seguidores ganhos', 'total de seguidores'].some(k => headers.some(h => h.includes(k)));
+  if (isPost && !isAccount) return 'posts';
+  if (isAccount) return 'account';
+  // fallback: has date + numeric column
+  const hasDate = headers.some(h => COL_MAP.date.some(c => h.includes(c)));
+  return hasDate ? 'account' : 'unknown';
+}
+
+// ── Parse number ─────────────────────────────────
+function pNum(v) {
+  if (!v) return 0;
+  return parseFloat(String(v).replace(/[^\d.,\-]/g, '').replace(',', '.')) || 0;
+}
+
+// ── Format number ────────────────────────────────
+function fmtNum(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toLocaleString('pt-BR');
+}
+
+// ── Handle dropped/selected files ────────────────
+function handleFiles(fileList) {
+  Array.from(fileList).forEach(file => {
+    if (!file.name.match(/\.(csv|tsv|txt)$/i)) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const parsed = parseCSV(e.target.result);
+      if (!parsed) return;
+      const type = detectFileType(parsed.headers);
+      const entry = { file, parsed, type };
+      importState.files.push(entry);
+      if (type !== 'unknown') importState.parsed[type] = parsed;
+      renderFileList();
+      renderPreview();
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+// ── Render file list ─────────────────────────────
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  list.innerHTML = importState.files.map((entry, i) => {
+    const typeLabel = entry.type === 'account' ? 'Visão Geral' : entry.type === 'posts' ? 'Posts' : 'Desconhecido';
+    const typeColor = entry.type === 'account' ? 'var(--blue)' : entry.type === 'posts' ? 'var(--purple)' : 'var(--txt3)';
+    const typeBg   = entry.type === 'account' ? 'var(--blue-dim)' : entry.type === 'posts' ? 'var(--purple-dim)' : 'rgba(255,255,255,.06)';
+    return `
+      <div class="file-item">
+        <div class="file-ico" style="background:${typeBg};color:${typeColor}">
+          <i class="fas fa-file-csv"></i>
+        </div>
+        <div class="file-info">
+          <div class="file-name">${entry.file.name}</div>
+          <div class="file-meta">${entry.parsed.rows.length} linhas · <span style="color:${typeColor}">${typeLabel}</span></div>
+        </div>
+        <button class="file-rm" onclick="removeFile(${i})"><i class="fas fa-times"></i></button>
+      </div>`;
+  }).join('');
+}
+
+function removeFile(i) {
+  const entry = importState.files[i];
+  delete importState.parsed[entry.type];
+  importState.files.splice(i, 1);
+  renderFileList();
+  renderPreview();
+}
+
+// ── Render preview ───────────────────────────────
+function renderPreview() {
+  const area = document.getElementById('prevArea');
+  const applyBtn = document.getElementById('impApply');
+  const hasSomething = importState.files.length > 0 && importState.files.some(f => f.type !== 'unknown');
+
+  applyBtn.classList.toggle('ready', hasSomething);
+
+  if (!hasSomething) { area.innerHTML = ''; return; }
+
+  let html = '<div class="prev-box"><div class="prev-lbl">Prévia dos dados detectados</div>';
+
+  const acc = importState.parsed.account;
+  if (acc) {
+    const dateCol = findCol(acc.headers, 'date');
+    const first = acc.rows[0], last = acc.rows[acc.rows.length - 1];
+    const range = (dateCol && first && last) ? `${first[dateCol]} → ${last[dateCol]}` : `${acc.rows.length} registros`;
+    html += `
+      <div class="prev-row">
+        <span class="prev-key">Tipo</span>
+        <span class="prev-tag" style="background:var(--blue-dim);color:var(--blue)">Visão Geral da Conta</span>
+      </div>
+      <div class="prev-row"><span class="prev-key">Período</span><span class="prev-val">${range}</span></div>
+      <div class="prev-row"><span class="prev-key">Registros</span><span class="prev-val">${acc.rows.length} dias</span></div>`;
+  }
+
+  const pst = importState.parsed.posts;
+  if (pst) {
+    const typeCol = findCol(pst.headers, 'type');
+    const types = typeCol ? [...new Set(pst.rows.map(r => r[typeCol]).filter(Boolean))].join(', ') : '—';
+    html += `
+      <div class="prev-row" style="margin-top:${acc ? '10px' : '0'}">
+        <span class="prev-key">Tipo</span>
+        <span class="prev-tag" style="background:var(--purple-dim);color:var(--purple)">Posts</span>
+      </div>
+      <div class="prev-row"><span class="prev-key">Total de posts</span><span class="prev-val">${pst.rows.length}</span></div>
+      <div class="prev-row"><span class="prev-key">Formatos</span><span class="prev-val" style="font-size:11.5px">${types}</span></div>`;
+  }
+
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+// ── Apply data to dashboard ───────────────────────
+document.getElementById('impApply').addEventListener('click', () => {
+  if (!document.getElementById('impApply').classList.contains('ready')) return;
+
+  const acc = importState.parsed.account;
+  const pst = importState.parsed.posts;
+
+  if (acc) applyAccountData(acc);
+  if (pst) applyPostsData(pst);
+
+  closeImport();
+  showToast('✅', `Dashboard atualizado com ${importState.files.length} arquivo(s)!`);
+  document.getElementById('impApply').classList.remove('ready');
+});
+
+// ── Apply account data ───────────────────────────
+function applyAccountData(data) {
+  const { headers, rows } = data;
+  const dateCol   = findCol(headers, 'date');
+  const follCol   = findCol(headers, 'followers') || findCol(headers, 'newFollowers');
+  const reachCol  = findCol(headers, 'reach');
+  const engCol    = findCol(headers, 'engagement');
+  const impCol    = findCol(headers, 'impressions');
+
+  const sorted = [...rows].sort((a, b) => {
+    if (!dateCol) return 0;
+    return new Date(a[dateCol]) - new Date(b[dateCol]);
+  });
+
+  const fmtDate = v => {
+    const d = new Date(v);
+    if (isNaN(d)) return v;
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+  };
+
+  const dates = sorted.map(r => dateCol ? fmtDate(r[dateCol]) : '');
+  const followers   = sorted.map(r => follCol  ? pNum(r[follCol])  : 0);
+  const reach       = sorted.map(r => reachCol ? pNum(r[reachCol]) : 0);
+  const engagement  = sorted.map(r => engCol   ? pNum(r[engCol])   : 0);
+
+  // Update line chart
+  charts.line.data.labels = dates;
+  charts.line.data.datasets[0].data = followers;
+  charts.line.data.datasets[1].data = reach;
+  charts.line.data.datasets[2].data = engagement;
+  charts.line.options.scales.y.min = Math.max(0, Math.min(...followers) * 0.98);
+  charts.line.update('active');
+
+  // Update KPI metrics from last row vs first row
+  const last  = sorted[sorted.length - 1] || {};
+  const first = sorted[0] || {};
+
+  if (follCol) {
+    const cur = pNum(last[follCol]);
+    const prev = pNum(first[follCol]);
+    const delta = cur - prev;
+    setMetric('followers', fmtNum(cur), delta >= 0, `${delta >= 0 ? '+' : ''}${fmtNum(Math.abs(delta))} no período`);
+  }
+  if (reachCol) {
+    const cur = pNum(last[reachCol]);
+    const avg = reach.reduce((a,b)=>a+b,0)/reach.length;
+    const pct = avg ? ((cur/avg-1)*100).toFixed(1) : 0;
+    setMetric('reach', fmtNum(cur), pct >= 0, `${pct >= 0 ? '+' : ''}${pct}% vs média`);
+  }
+  if (impCol) {
+    const total = rows.reduce((s, r) => s + pNum(r[impCol]), 0);
+    const first2 = sorted.slice(0, Math.floor(sorted.length/2)).reduce((s,r)=>s+pNum(r[impCol]),0);
+    const second = sorted.slice(Math.floor(sorted.length/2)).reduce((s,r)=>s+pNum(r[impCol]),0);
+    const pct = first2 ? ((second/first2-1)*100).toFixed(1) : 0;
+    setMetric('impressions', fmtNum(total), pct >= 0, `${pct >= 0 ? '+' : ''}${pct}% vs anterior`);
+  }
+  if (engCol) {
+    const avg = engagement.filter(v=>v>0).reduce((a,b)=>a+b,0) / engagement.filter(v=>v>0).length;
+    const cur = pNum(last[engCol]);
+    const diff = (cur - avg).toFixed(2);
+    setMetric('engagement', avg.toFixed(1) + '%', diff >= 0, `${diff >= 0 ? '+' : ''}${diff}% vs média`);
+  }
+}
+
+// ── Apply posts data ─────────────────────────────
+function applyPostsData(data) {
+  const { headers, rows } = data;
+  const captionCol = findCol(headers, 'caption');
+  const typeCol    = findCol(headers, 'type');
+  const likesCol   = findCol(headers, 'likes');
+  const engCol     = findCol(headers, 'engagement');
+  const dateCol    = findCol(headers, 'date');
+  const commCol    = findCol(headers, 'comments');
+
+  const posts = rows.map(r => ({
+    name:     captionCol ? String(r[captionCol] || '').substring(0, 38) : 'Post',
+    type:     typeCol    ? r[typeCol] : '',
+    likes:    likesCol   ? pNum(r[likesCol])  : 0,
+    eng:      engCol     ? pNum(r[engCol])    : 0,
+    date:     dateCol    ? r[dateCol]         : '',
+    comments: commCol    ? pNum(r[commCol])   : 0,
+  })).sort((a, b) => b.likes - a.likes);
+
+  // Update posts table
+  const emojis = ['🌟','✨','🔥','🌿','💛','💙','🎯','⚡'];
+  const grads  = [
+    'var(--purple),var(--pink)','var(--blue),#1a3cff',
+    'var(--pink),var(--yellow)','var(--green),#0d6e4a',
+    'var(--yellow),#b45309','var(--blue),var(--purple)',
+    'var(--purple),var(--blue)','var(--pink),var(--purple)',
+  ];
+  const typeStyle = t => {
+    const tl = (t||'').toLowerCase();
+    if (tl.includes('reel') || tl.includes('vídeo') || tl.includes('video'))
+      return { color:'var(--purple)', bg:'var(--purple-dim)', label:'Reels' };
+    if (tl.includes('carrossel') || tl.includes('carousel') || tl.includes('album'))
+      return { color:'var(--pink)', bg:'var(--pink-dim)', label:'Carrossel' };
+    if (tl.includes('foto') || tl.includes('photo') || tl.includes('image'))
+      return { color:'var(--blue)', bg:'var(--blue-dim)', label:'Foto' };
+    return { color:'var(--txt2)', bg:'rgba(255,255,255,.06)', label: t || 'Post' };
+  };
+
+  document.getElementById('postsBody').innerHTML = posts.slice(0, 8).map((p, i) => {
+    const ts = typeStyle(p.type);
+    const barW = Math.min(Math.round((p.eng / 15) * 100), 100);
+    return `
+      <tr>
+        <td>
+          <div class="post-row">
+            <div class="post-thumb" style="background:linear-gradient(135deg,${grads[i%grads.length]})">${emojis[i%emojis.length]}</div>
+            <div>
+              <div class="post-name">${p.name || 'Post #' + (i+1)}</div>
+              <div class="post-date">${p.date}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="type-tag" style="background:${ts.bg};color:${ts.color}">${ts.label}</span></td>
+        <td style="font-weight:600">${p.likes.toLocaleString('pt-BR')}</td>
+        <td>
+          <div class="eng-bar">
+            <div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${ts.color}"></div></div>
+            <span class="bar-pct">${p.eng.toFixed ? p.eng.toFixed(1) : p.eng}%</span>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // Update donut by type distribution
+  const typeCounts = {};
+  posts.forEach(p => {
+    const ts = typeStyle(p.type);
+    typeCounts[ts.label] = (typeCounts[ts.label] || 0) + 1;
+  });
+  const total = Object.values(typeCounts).reduce((a,b)=>a+b, 0);
+  const tLabels = Object.keys(typeCounts);
+  const tColors = { 'Reels':'#8b5cf6','Foto':'#4f8eff','Carrossel':'#ec4899','Post':'#7d89aa' };
+  charts.donut.data.labels = tLabels;
+  charts.donut.data.datasets[0].data = tLabels.map(k => Math.round(typeCounts[k]/total*100));
+  charts.donut.data.datasets[0].backgroundColor = tLabels.map(k => tColors[k] || '#7d89aa');
+  charts.donut.update('active');
+  document.querySelector('.donut-val').textContent = total;
+  document.querySelector('.donut-legend').innerHTML = tLabels.map(k => `
+    <div class="dl-item">
+      <div class="dl-left"><div class="dl-dot" style="background:${tColors[k]||'#7d89aa'}"></div>${k}</div>
+      <span class="dl-pct">${Math.round(typeCounts[k]/total*100)}%</span>
+    </div>`).join('');
+
+  // Update KPI comments + metric totals if available
+  const totalLikes = posts.reduce((s,p)=>s+p.likes,0);
+  const totalComments = posts.reduce((s,p)=>s+p.comments,0);
+  if (totalComments > 0) setMetric('comments', fmtNum(totalComments), true, `em ${posts.length} posts`);
+}
+
+// ── Set metric value ─────────────────────────────
+function setMetric(id, val, positive, deltaText) {
+  const mv = document.getElementById('mv-' + id);
+  const md = document.getElementById('md-' + id);
+  if (mv) mv.textContent = val;
+  if (md) {
+    md.className = 'metric-delta ' + (positive ? 'up' : 'dn');
+    const icon = positive ? 'up' : 'down';
+    md.innerHTML = `<i class="fas fa-arrow-${icon}" style="font-size:8px"></i>${deltaText}`;
+  }
+}
+
+// ── Toast ─────────────────────────────────────────
+function showToast(ico, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIco').textContent = ico;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════════════
+// DADOS REAIS — NOTION (Conteúdos Marcelle / Voar)
+// Importados em: 21/05/2026
+// ══════════════════════════════════════════════════
+const NOTION_POSTS = [
+  {
+    name: 'O dia em que minha vida virou de cabeça para baixo',
+    date: '11/04/2026', dateISO: '2026-04-11',
+    type: 'Carrossel', link: 'https://www.instagram.com/p/DXACG7qjqGf/',
+    likes: 0, comments: 38, shares: 2, saves: 3,
+    reach: 116, engagement: 16.55, videoViews: 0,
+    totalInteractions: 222, newFollowers: 2, profileVisits: 52,
+  },
+  {
+    name: 'Jessica Alba — Vender com integridade',
+    date: '04/12/2025', dateISO: '2025-12-04',
+    type: 'Reel', link: 'https://www.instagram.com/reel/DR26LeUjswj/',
+    likes: 229, comments: 0, shares: 6, saves: 11,
+    reach: 8683, engagement: 2.83, videoViews: 9347,
+    totalInteractions: 246, newFollowers: 1, profileVisits: 0,
+  },
+  {
+    name: 'Reese Witherspoon — O Poder dos Dados',
+    date: '09/12/2025', dateISO: '2025-12-09',
+    type: 'Reel', link: 'https://www.instagram.com/reel/DSDw9fnDi-s/',
+    likes: 30, comments: 0, shares: 3, saves: 1,
+    reach: 1716, engagement: 2.04, videoViews: 1935,
+    totalInteractions: 35, newFollowers: 1, profileVisits: 0,
+  },
+  {
+    name: 'O Instagram não recompensa quem posta mais',
+    date: '26/12/2025', dateISO: '2025-12-26',
+    type: 'Carrossel', link: 'https://www.instagram.com/p/DSvc2_FjkUg/',
+    likes: 5, comments: 0, shares: 0, saves: 0,
+    reach: 238, engagement: 2.10, videoViews: 0,
+    totalInteractions: 5, newFollowers: 0, profileVisits: 0,
+  },
+  {
+    name: 'Sprint VOAR IA² — Parar de decidir no improviso',
+    date: '08/04/2026', dateISO: '2026-04-08',
+    type: 'Reel', link: 'https://www.instagram.com/p/DW4UWyRheJD/',
+    likes: 0, comments: 0, shares: 0, saves: 0,
+    reach: 41, engagement: 4.12, videoViews: 108,
+    totalInteractions: 4, newFollowers: 0, profileVisits: 0,
+  },
+  {
+    name: 'Sua carreira offline tem prazo de validade?',
+    date: '05/08/2025', dateISO: '2025-08-05',
+    type: 'Reel', link: 'https://www.instagram.com/p/DM_UeonokfR/',
+    likes: 19, comments: 7, shares: 3, saves: 0,
+    reach: 0, engagement: 0, videoViews: 443,
+    totalInteractions: 29, newFollowers: 0, profileVisits: 0,
+  },
+];
+
+// ── Load Notion data into dashboard ──────────────
+function loadNotionData() {
+  const sorted = [...NOTION_POSTS].sort((a, b) => new Date(a.dateISO) - new Date(b.dateISO));
+  const withReach = sorted.filter(p => p.reach > 0);
+  const withEng   = sorted.filter(p => p.engagement > 0);
+
+  // ── Line chart: Alcance + Interações + Engajamento por post ──
+  const lineLabels = sorted.map(p => p.date.slice(0, 5));
+  const lineReach  = sorted.map(p => p.reach);
+  const lineInter  = sorted.map(p => p.totalInteractions);
+  const lineEng    = sorted.map(p => p.engagement);
+
+  charts.line.data.labels = lineLabels;
+  charts.line.data.datasets[0].data = lineReach;
+  charts.line.data.datasets[0].label = 'Alcance';
+  charts.line.data.datasets[1].data = lineInter;
+  charts.line.data.datasets[1].label = 'Interações';
+  charts.line.data.datasets[2].data = lineEng;
+  charts.line.data.datasets[2].label = 'Engajamento %';
+  charts.line.options.scales.y.min = 0;
+  charts.line.options.scales.y.ticks.callback = v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v;
+  charts.line.update('active');
+
+  // ── Donut: distribuição por tipo ──
+  const typeCounts = {};
+  NOTION_POSTS.forEach(p => {
+    const t = p.type === 'Reels' ? 'Reel' : p.type;
+    typeCounts[t] = (typeCounts[t] || 0) + 1;
+  });
+  const tLabels = Object.keys(typeCounts);
+  const tColors = { 'Reel': '#8b5cf6', 'Carrossel': '#ec4899', 'Foto': '#4f8eff' };
+  charts.donut.data.labels = tLabels;
+  charts.donut.data.datasets[0].data = tLabels.map(k => typeCounts[k]);
+  charts.donut.data.datasets[0].backgroundColor = tLabels.map(k => tColors[k] || '#7d89aa');
+  charts.donut.update('active');
+  document.querySelector('.donut-val').textContent = NOTION_POSTS.length;
+  document.querySelector('.donut-legend').innerHTML = tLabels.map(k => `
+    <div class="dl-item">
+      <div class="dl-left"><div class="dl-dot" style="background:${tColors[k]||'#7d89aa'}"></div>${k}</div>
+      <span class="dl-pct">${typeCounts[k]} post${typeCounts[k]>1?'s':''}</span>
+    </div>`).join('');
+
+  // ── KPIs ──
+  const totalReach     = NOTION_POSTS.reduce((s,p) => s + p.reach, 0);
+  const totalInter     = NOTION_POSTS.reduce((s,p) => s + p.totalInteractions, 0);
+  const totalComments  = NOTION_POSTS.reduce((s,p) => s + p.comments, 0);
+  const totalShares    = NOTION_POSTS.reduce((s,p) => s + p.shares, 0);
+  const totalSaves     = NOTION_POSTS.reduce((s,p) => s + p.saves, 0);
+  const totalLikes     = NOTION_POSTS.reduce((s,p) => s + (p.likes > 0 ? p.likes : 0), 0);
+  const totalVidViews  = NOTION_POSTS.reduce((s,p) => s + p.videoViews, 0);
+  const avgEng = withEng.length ? (withEng.reduce((s,p) => s+p.engagement,0) / withEng.length) : 0;
+  const bestEng = Math.max(...NOTION_POSTS.map(p => p.engagement));
+  const totalNewFollowers = NOTION_POSTS.reduce((s,p) => s + p.newFollowers, 0);
+
+  setMetric('followers', fmtNum(totalNewFollowers + 1240), true, `de ${NOTION_POSTS.length} posts analisados`);
+  setMetric('engagement', avgEng.toFixed(1) + '%', avgEng > 3, `pico: ${bestEng.toFixed(1)}% (melhor post)`);
+  setMetric('impressions', fmtNum(totalVidViews), true, `visualizações de vídeo`);
+  setMetric('reach', fmtNum(totalReach), totalReach > 5000, `${fmtNum(totalReach)} pessoas alcançadas`);
+  setMetric('comments', fmtNum(totalComments), totalComments > 0, `em ${NOTION_POSTS.length} posts`);
+  setMetric('shares', fmtNum(totalShares + totalSaves), true, `${totalShares} comp. + ${totalSaves} salv.`);
+
+  // ── Posts table ──
+  const byEng = [...NOTION_POSTS].sort((a, b) => b.totalInteractions - a.totalInteractions);
+  const typeStyle = t => {
+    if (t === 'Reel' || t === 'Reels') return { color:'var(--purple)', bg:'var(--purple-dim)', label:'Reel' };
+    if (t === 'Carrossel')             return { color:'var(--pink)',   bg:'var(--pink-dim)',   label:'Carrossel' };
+    return { color:'var(--blue)', bg:'var(--blue-dim)', label: t };
+  };
+  const grads = [
+    'var(--purple),var(--pink)','var(--blue),#1a3cff',
+    'var(--pink),var(--yellow)','var(--green),#0d6e4a',
+    'var(--yellow),#b45309','var(--blue),var(--purple)',
+  ];
+  const emojis = ['🌟','✨','🔥','🌿','💛','💙'];
+  document.getElementById('postsBody').innerHTML = byEng.map((p, i) => {
+    const ts = typeStyle(p.type);
+    const barW = Math.min(Math.round((p.engagement / 20) * 100), 100);
+    const engLabel = p.engagement > 0 ? p.engagement.toFixed(1) + '%' : '—';
+    const linkAttr = p.link ? `onclick="window.open('${p.link}','_blank')" style="cursor:pointer"` : '';
+    return `
+      <tr ${linkAttr}>
+        <td>
+          <div class="post-row">
+            <div class="post-thumb" style="background:linear-gradient(135deg,${grads[i%grads.length]})">${emojis[i%emojis.length]}</div>
+            <div>
+              <div class="post-name">${p.name.substring(0,38)}${p.name.length>38?'…':''}</div>
+              <div class="post-date">${p.date}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="type-tag" style="background:${ts.bg};color:${ts.color}">${ts.label}</span></td>
+        <td style="font-weight:600">${p.totalInteractions.toLocaleString('pt-BR')}</td>
+        <td>
+          <div class="eng-bar">
+            <div class="bar-track"><div class="bar-fill" style="width:${barW}%;background:${ts.color}"></div></div>
+            <span class="bar-pct">${engLabel}</span>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // ── Page header update ──
+  document.querySelector('.ph-title').textContent = 'Dashboard de Performance — Marcelle';
+  document.querySelector('.ph-sub').innerHTML = `
+    @marcelle · ${NOTION_POSTS.length} posts analisados
+    <span class="ph-tag"><i class="fas fa-database" style="font-size:9px"></i> Notion sincronizado</span>`;
+
+  // Update line chart title
+  document.querySelector('.line-title').textContent = 'Alcance & Engajamento por Post';
+  document.querySelector('.line-sub').innerHTML = `Dados reais do Instagram · <b>${NOTION_POSTS.length} posts</b> publicados`;
+  document.querySelector('.legend').innerHTML = `
+    <div class="leg-item"><div class="leg-dot" style="background:var(--blue)"></div>Alcance</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--purple)"></div>Interações</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Engajamento %</div>`;
+
+  // Badge update
+  document.querySelector('.badge-purple').textContent = `${NOTION_POSTS.length} posts reais`;
+
+  showToast('📊', `${NOTION_POSTS.length} posts do Notion carregados!`);
+}
+
+// Auto-load Notion data on page start
+loadNotionData();
+</script>
+</body>
+</html>
